@@ -14,13 +14,29 @@ class TasksController extends Controller
      * @return \Illuminate\Http\Response
      */
     // getでmessages/にアクセスされた場合の「一覧表示処理」
-    public function index()
+    /*public function index()
     {
         $tasks = Task::all();
 
         return view('tasks.index', [
             'tasks' => $tasks,
         ]);
+    }*/
+    
+    public function index()
+    {
+        $data = [];
+        if (\Auth::check()) {
+            $user = \Auth::user();
+            $tasks = $user->tasks()->orderBy('created_at', 'desc')->paginate(10);
+            
+            $data = [
+                'user' => $user,
+                'tasks' => $tasks,
+            ];
+        }
+        
+        return view('welcome', $data);
     }
 
     /**
@@ -49,10 +65,18 @@ class TasksController extends Controller
             'status' => 'required|max:10',
             'content' => 'required|max:191',
         ]);
+        
+        $request->user()->tasks()->create([
+            'content' => $request->content,
+            'status' => $request->status,
+        ]);
+        
+        /*
         $task = new Task;
         $task->status = $request->status; 
         $task->content = $request->content;
         $task->save();
+        */
 
         return redirect('/');
     }
@@ -101,9 +125,12 @@ class TasksController extends Controller
             'content' => 'required|max:191',
         ]);
         $task = Task::find($id);
-        $task->status = $request->status;
-        $task->content = $request->content;
-        $task->save();
+        
+        if (\Auth::id() === $task->user_id){
+            $task->status = $request->status;
+            $task->content = $request->content;
+            $task->save();
+        }
 
         return redirect('/');
     }
@@ -117,7 +144,9 @@ class TasksController extends Controller
     public function destroy($id)
     {
         $task = Task::find($id);
-        $task->delete();
+        if (\Auth::id() === $task->user_id){
+            $task->delete();
+        }
 
         return redirect('/');
     }
