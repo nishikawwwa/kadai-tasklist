@@ -23,6 +23,11 @@ class TasksController extends Controller
         ]);
     }*/
     
+    protected $redirectTo = '/';
+    
+    
+    
+    
     public function index()
     {
         $data = [];
@@ -89,6 +94,7 @@ class TasksController extends Controller
      */
     public function show($id)
     {
+        $this->middleware('auth')->except('logout');
         $task = Task::find($id);
 
         return view('tasks.show', [
